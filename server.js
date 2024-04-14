@@ -1,32 +1,36 @@
 const express = require("express");
-const request = require("postman-request");
-
+require("dotenv").config();
+const weatherRoutes = require("./routes/weatherRoutes");
+const mapboxRoutes = require("./routes/mapboxRoutes");
+const geocode = require("./utils/geocode");
+const forecast = require("./utils/forecast");
 const app = express();
 const port = 3000;
 
-require("dotenv").config();
+const address = process.argv[2];
+if (!address) {
+  return console.error("Please provide an address");
+} else {
+  geocode(address, (error, { latitude, longitude, location } = {}) => {
+    if (error) {
+      return console.error("Error:", error);
+    }
+    console.log("Geocode Data:", { latitude, longitude, location });
+    forecast(latitude, longitude, (error, forecastData) => {
+      if (error) {
+        return console.error("Error:", error);
+      }
+      // Display the forecast (description, temperature, location, and percentage of rain chance)
+      console.log(location);
+      console.log(
+        `${forecastData.description}. It is currently ${forecastData.temperature} degrees out. There is a ${forecastData.precipitation}% chance of rain.`
+      );
+    });
+  });
+}
 
-const url =
-  process.env.WEATHER_API_URL +
-  process.env.WEATHER_API_KEY +
-  "/37.8267,-122.4233";
-
-request({ url: url, json: true }, (error, response) => {
-  if (error) {
-    console.log("Unable to connect to weather service");
-  } else if (response.body.error) {
-    console.log("Unable to find location");
-  } else {
-    console.log(
-      response.body.current.weather_descriptions[0] +
-        ". It is currently " +
-        response.body.current.temperature +
-        " degrees out. There is a " +
-        response.body.current.precip +
-        "% chance of rain."
-    );
-  }
-});
+app.use("/weather", weatherRoutes);
+app.use("/location", mapboxRoutes);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);

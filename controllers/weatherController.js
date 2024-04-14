@@ -1,6 +1,6 @@
 const { fetchLocation } = require("../services/mapbox");
 const { fetchWeather } = require("../services/weather");
-const geocode = require("../services/geocode");
+const geocode = require("../utils/geocode");
 
 async function getWeatherByCity(req, res) {
   const city = req.params.city;
